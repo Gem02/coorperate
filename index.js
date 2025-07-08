@@ -32,7 +32,7 @@ app.use(express.json());
 app.use(secureHeaders);
 app.use(hpp);
 app.use(cors({
-  origin: process.env.CORS_WHITELIST.split(','),
+  origin: ['http://localhost:3000','https://ambassador-admin.vercel.app'],
   methods: 'GET,POST,PUT,DELETE,PATCH',
   credentials: true,
 }));
