@@ -2,10 +2,11 @@
 
 const UserModel = require('../models/User');
 const { generateAccessToken, generateRefreshToken } = require('../utilities/generateToken');
-const bcryptjs = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const forgotPasswordModel = require('../models/forgotPassword');
 const {sendVerificationEmail} = require('../utilities/emailTemplate');
+
 
 
 const sendForgotPasswordCode = async (req, res) =>{
@@ -86,96 +87,107 @@ const verifyCode = async (req, res) => {
   }
 }; 
 
+
+
+
 const registerUser = async (req, res) => {
-console.log('the reg  is ', req.body)
+  console.log("the reg is", req.body);
+
   try {
     const firstName = validator.escape(req.body.firstName || '');
     const lastName = validator.escape(req.body.lastName || '');
     const email = validator.normalizeEmail(req.body.email || '');
-    const password = validator.escape(req.body.password || '');
+    const password = req.body.password || '';
 
     if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     const userExists = await UserModel.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
-    
 
     const user = await UserModel.create({
       firstName,
       lastName,
       email,
-      password,
+      password, // will be hashed by pre-save hook
     });
 
-    return res.status(201).json({ message: 'User created successfully', user });
-
+    return res.status(201).json({
+      message: "User created successfully",
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      },
+    });
   } catch (error) {
-    console.error('Registration error:', error.message);
+    console.error("Registration error:", error);
     return res.status(500).json({
-      message: 'Registration failed due to server error',
+      message: "Registration failed due to server error",
       error: error.message,
     });
   }
 };
 
-
 const login = async (req, res) => {
-    try {
-        const email = validator.normalizeEmail(req.body.email || '');
-        const password = validator.escape(req.body.password || '');
+  try {
+    const email = validator.normalizeEmail(req.body.email || '');
+    const password = req.body.password || '';
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
-
-        const userInfo = await UserModel.findOne({ email }).select('+password');
-        if (!userInfo) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        const isCorrect = await bcryptjs.compare(password, userInfo.password);
-        if (!isCorrect) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        userInfo.lastLogin = new Date();
-        await userInfo.save();
-
-        const accessToken = generateAccessToken(userInfo._id, userInfo.email, userInfo.role);
-        const refreshToken = generateRefreshToken(userInfo._id, userInfo.email, userInfo.role);
-
-        res.cookie('accessToken', accessToken, {
-            maxAge: 15 * 60 * 1000,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'None'
-        });
-
-        res.cookie('refreshToken', refreshToken, {
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'None'
-        });
-
-
-        return res.status(200).json({
-            id: userInfo._id,
-            firstName: userInfo.firstName,
-            lastName: userInfo.lastName,
-            email: userInfo.email,
-            role: userInfo.role
-        });
-
-    } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({ message: 'Login failed. Please try again.' });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
     }
+
+    const userInfo = await UserModel.findOne({ email }).select("+password");
+    if (!userInfo) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isCorrect = await bcrypt.compare(password, userInfo.password);
+    if (!isCorrect) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    userInfo.lastLogin = new Date();
+    await userInfo.save();
+
+    const accessToken = generateAccessToken(userInfo._id, userInfo.email, userInfo.role);
+    const refreshToken = generateRefreshToken(userInfo._id, userInfo.email, userInfo.role);
+
+    res.cookie("accessToken", accessToken, {
+      maxAge: 15 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    });
+
+    return res.status(200).json({
+      id: userInfo._id,
+      firstName: userInfo.firstName,
+      lastName: userInfo.lastName,
+      email: userInfo.email,
+      role: userInfo.role,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Login failed. Please try again." });
+  }
 };
+
+module.exports = { registerUser, login };
+
+
 
 const loginAdmin = async (req, res) => {
   try {

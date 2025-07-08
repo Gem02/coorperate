@@ -1,5 +1,6 @@
 // models/User.js
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs"); // ✅ use bcryptjs as you're using that package
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
@@ -10,13 +11,13 @@ const userSchema = new mongoose.Schema({
   stateOrCity: { type: String },
   password: { type: String, required: true },
   photo: { type: String }, // base64 encoded image string
+  role: { type: String, default: "user" }, // ✅ added role
+  lastLogin: { type: Date }, // ✅ added lastLogin
 }, { timestamps: true });
 
-
-
-// Middleware to hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+// ✅ Hash password before saving
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(12);
@@ -27,9 +28,8 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-
-// Method to compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
+// ✅ Method to compare passwords
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
