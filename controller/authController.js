@@ -269,9 +269,6 @@ const updateUserProfile = async (req, res) => {
 
 
 
-module.exports = { registerUser, login, updateUserProfile };
-
-
 
 const loginAdmin = async (req, res) => {
   try {
@@ -367,4 +364,4 @@ const logout = (req, res) => {
     }
 } */
 
-module.exports = { registerUser, login, logout, sendForgotPasswordCode, verifyCode, newPassword, loginAdmin};
+module.exports = { registerUser, login, updateUserProfile, logout, sendForgotPasswordCode, verifyCode, newPassword, loginAdmin};
