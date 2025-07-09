@@ -185,7 +185,91 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, login };
+
+const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const updates = {};
+
+    // Validate and add allowed fields only
+    if (req.body.firstName) {
+      updates.firstName = validator.escape(req.body.firstName);
+    }
+
+    if (req.body.lastName) {
+      updates.lastName = validator.escape(req.body.lastName);
+    }
+
+    if (req.body.email) {
+      const email = validator.normalizeEmail(req.body.email);
+      const existing = await UserModel.findOne({ email, _id: { $ne: userId } });
+      if (existing) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+      updates.email = email;
+    }
+
+    if (req.body.phone) {
+      updates.phone = validator.escape(req.body.phone);
+    }
+
+    if (req.body.country) {
+      updates.country = validator.escape(req.body.country);
+    }
+
+    if (req.body.stateOrCity) {
+      updates.stateOrCity = validator.escape(req.body.stateOrCity);
+    }
+
+    if (req.body.photo) {
+      updates.photo = req.body.photo; 
+    }
+
+    if (req.body.password) {
+      return res.status(400).json({ message: "Password cannot be updated here" });
+    }
+
+    // Prevent update if nothing is changing
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields provided for update" });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        country: updatedUser.country,
+        stateOrCity: updatedUser.stateOrCity,
+        photo: updatedUser.photo,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    console.error("Profile update error:", error.message);
+    return res.status(500).json({ message: "Failed to update profile", error: error.message });
+  }
+};
+
+
+
+module.exports = { registerUser, login, updateUserProfile };
 
 
 
