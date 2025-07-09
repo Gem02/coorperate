@@ -221,8 +221,8 @@ const updateUserProfile = async (req, res) => {
       updates.country = validator.escape(req.body.country);
     }
 
-    if (req.body.stateOrCity) {
-      updates.stateOrCity = validator.escape(req.body.stateOrCity);
+    if (req.body.state) {
+      updates.state = validator.escape(req.body.state);
     }
 
     if (req.body.photo) {
@@ -256,7 +256,7 @@ const updateUserProfile = async (req, res) => {
         email: updatedUser.email,
         phone: updatedUser.phone,
         country: updatedUser.country,
-        stateOrCity: updatedUser.stateOrCity,
+        state: updatedUser.state,
         photo: updatedUser.photo,
         role: updatedUser.role,
       },
