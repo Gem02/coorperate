@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   country: { type: String },
   state: { type: String },
+  lga: {type: String},
   password: { type: String, required: true },
   photo: { type: String }, // base64 encoded image string
   role: { type: String, default: "user" }, // ✅ added role

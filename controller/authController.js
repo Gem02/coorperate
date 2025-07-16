@@ -97,10 +97,24 @@ const registerUser = async (req, res) => {
     const firstName = validator.escape(req.body.firstName || '');
     const lastName = validator.escape(req.body.lastName || '');
     const email = validator.normalizeEmail(req.body.email || '');
-    const password = req.body.password || '';
+    const phone = validator.escape(req.body.phone || '');
+    const country = validator.escape(req.body.country || '');
+    const state = validator.escape(req.body.state || '');
+    const lga = validator.escape(req.body.lga || '');
+    const role = validator.escape(req.body.role || 'user');
+    const photo = req.body.photo || ''; // base64 string, assumed safe
+    let password = req.body.password || '';
+
+    if (!phone) {
+      return res.status(400).json({ message: "Phone number is required" });
+    }
+
+    if (!password) {
+      password = phone; // fallback password
+    }
 
     if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "First name, last name, email, and password are required" });
     }
 
     const userExists = await UserModel.findOne({ email });
@@ -112,7 +126,13 @@ const registerUser = async (req, res) => {
       firstName,
       lastName,
       email,
-      password, // will be hashed by pre-save hook
+      phone,
+      country,
+      state,
+      lga,
+      password,
+      photo,
+      role,
     });
 
     return res.status(201).json({
@@ -121,7 +141,9 @@ const registerUser = async (req, res) => {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -132,6 +154,8 @@ const registerUser = async (req, res) => {
     });
   }
 };
+
+
 
 const login = async (req, res) => {
   try {
