@@ -91,7 +91,6 @@ const verifyCode = async (req, res) => {
 
 
 const registerUser = async (req, res) => {
-  console.log("📥 Incoming registration payload:", req.body);
 
   try {
     // Extract and sanitize fields
@@ -106,39 +105,29 @@ const registerUser = async (req, res) => {
     const photo = req.body.photo || '';
     let password = req.body.password || '';
 
-    console.log("🧼 Sanitized values:", {
-      firstName, lastName, email, phone, country, state, lga, role, photo, password
-    });
 
     // Check if phone is present
     if (!phone) {
-      console.warn("⚠️ Missing phone number");
       return res.status(400).json({ message: "Phone number is required" });
     }
 
     // Fallback: use phone as password if none provided
     if (!password) {
-      console.log("ℹ️ No password provided. Using phone number as fallback.");
       password = phone;
     }
 
     // Check for required fields
     if (!firstName || !lastName || !email || !password) {
-      console.warn("⚠️ Missing required field(s)", {
-        firstName, lastName, email, password
-      });
       return res.status(400).json({ message: "First name, last name, email, and password are required" });
     }
 
     // Check if user already exists
     const userExists = await UserModel.findOne({ email });
     if (userExists) {
-      console.warn("⚠️ Email already exists:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
     // Create user
-    console.log("✅ Creating user...");
     const user = await UserModel.create({
       firstName,
       lastName,
@@ -152,7 +141,6 @@ const registerUser = async (req, res) => {
       role,
     });
 
-    console.log("🎉 User created successfully:", user._id);
 
     return res.status(201).json({
       message: "User created successfully",
