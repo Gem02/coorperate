@@ -87,9 +87,6 @@ const verifyCode = async (req, res) => {
   }
 }; 
 
-
-
-
 const registerUser = async (req, res) => {
 
   try {
@@ -162,8 +159,6 @@ const registerUser = async (req, res) => {
   }
 };
 
-
-
 const login = async (req, res) => {
   try {
     const email = validator.normalizeEmail(req.body.email || '');
@@ -215,7 +210,6 @@ const login = async (req, res) => {
     return res.status(500).json({ message: "Login failed. Please try again." });
   }
 };
-
 
 const updateUserProfile = async (req, res) => {
   try {
@@ -298,9 +292,6 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-
-
-
 const loginAdmin = async (req, res) => {
   try {
     const email = validator.normalizeEmail(req.body.email || '');
@@ -352,7 +343,6 @@ const loginAdmin = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 
 const logout = (req, res) => {
     res.clearCookie('accessToken', {
