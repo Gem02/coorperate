@@ -1,7 +1,7 @@
-// controllers/projectController.js
-const Project = require('../models/Product');
+// controllers/ProductController.js
+const Product = require('../models/Product');
 
-const createProject = async (req, res) => {
+const createProduct = async (req, res) => {
   try {
     const {
       createdDate,
@@ -13,7 +13,7 @@ const createProject = async (req, res) => {
       userId,
     } = req.body;
 
-    const newProject = new Project({
+    const newProduct = new Product({
       createdDate,
       description,
       images,
@@ -23,11 +23,33 @@ const createProject = async (req, res) => {
       userId,
     });
 
-    const savedProject = await newProject.save();
-    res.status(201).json(savedProject);
+    const savedProduct = await newProduct.save();
+    res.status(201).json(savedProduct);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create project', details: error.message });
+    res.status(500).json({ error: 'Failed to create Product', details: error.message });
   }
 };
 
-module.exports = {createProject};
+// Fetch all products
+const getAllproducts = async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdDate: -1 }); // optional sorting
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products', details: error.message });
+  }
+};
+
+// Optional: Fetch products by userId
+const getproductsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const products = await Product.find({ userId }).sort({ createdDate: -1 });
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user products', details: error.message });
+  }
+};
+
+
+module.exports = {createProduct, getAllproducts};
