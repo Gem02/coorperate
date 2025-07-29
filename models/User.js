@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   state: { type: String },
   lga: {type: String},
   password: { type: String, required: true },
+  suspended: { type: Boolean, default: false },
   photo: { type: String }, // base64 encoded image string
   role: { type: String, default: "user" }, // ✅ added role
   lastLogin: { type: Date }, // ✅ added lastLogin

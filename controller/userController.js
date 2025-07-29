@@ -43,5 +43,60 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const suspendUser = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-module.exports = { fetchUserProfile, getAllUsers, deleteUser };
+    const user = await UserModel.findByIdAndUpdate(
+      id,
+      { suspended: true },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User has been suspended successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Suspend user error:", error);
+    return res.status(500).json({
+      message: "Failed to suspend user",
+      error: error.message,
+    });
+  }
+};
+
+const unsuspendUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await UserModel.findByIdAndUpdate(
+      id,
+      { suspended: false },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User has been unsuspended successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Unsuspend user error:", error);
+    return res.status(500).json({
+      message: "Failed to unsuspend user",
+      error: error.message,
+    });
+  }
+};
+
+
+
+module.exports = { fetchUserProfile, getAllUsers, deleteUser, suspendUser, unsuspendUser };
