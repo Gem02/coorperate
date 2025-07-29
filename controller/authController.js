@@ -104,8 +104,8 @@ const registerUser = async (req, res) => {
 
 
     // Check if phone is present
-    if (!phone) {
-      return res.status(400).json({ message: "Phone number is required" });
+    if (!phone || !password) {
+      return res.status(400).json({ message: "Phone number or password is required" });
     }
 
     // Fallback: use phone as password if none provided
@@ -169,8 +169,14 @@ const login = async (req, res) => {
     }
 
     const userInfo = await UserModel.findOne({ email }).select("+password");
+
     if (!userInfo) {
       return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // ❌ Deny login if user is suspended
+    if (userInfo.suspended) {
+      return res.status(403).json({ message: "Your account has been suspended. Contact support." });
     }
 
     const isCorrect = await bcrypt.compare(password, userInfo.password);
@@ -210,6 +216,7 @@ const login = async (req, res) => {
     return res.status(500).json({ message: "Login failed. Please try again." });
   }
 };
+
 
 const updateUserProfile = async (req, res) => {
   try {
