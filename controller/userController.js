@@ -17,4 +17,31 @@ const fetchUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { fetchUserProfile };
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await UserModel.find().select('-password'); // Exclude passwords
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Get users error:", error);
+    return res.status(500).json({ message: "Failed to fetch users", error: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedUser = await UserModel.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    return res.status(500).json({ message: "Failed to delete user", error: error.message });
+  }
+};
+
+
+module.exports = { fetchUserProfile, getAllUsers, deleteUser };
