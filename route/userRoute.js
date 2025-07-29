@@ -5,7 +5,7 @@ const { fetchUserProfile, getAllUsers,deleteUser, suspendUser, unsuspendUser } =
 router.get('/profile/:userId', fetchUserProfile);
 router.get('/', getAllUsers);          // GET all users
 router.delete('/:id', deleteUser); 
-router.patch('suspend/:id', suspendUser); 
-router.patch('activate/:id', unsuspendUser)
+router.patch('/suspend/:id', suspendUser); 
+router.patch('/activate/:id', unsuspendUser)
 
 module.exports = router;
