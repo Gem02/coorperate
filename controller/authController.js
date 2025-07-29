@@ -103,13 +103,11 @@ const registerUser = async (req, res) => {
     let password = req.body.password || '';
 
 
-    // Check if phone is present
-    if (!phone || !password) {
-      return res.status(400).json({ message: "Phone number or password is required" });
-    }
-
     // Fallback: use phone as password if none provided
     if (!password) {
+      if (!phone) {
+      return res.status(400).json({ message: "Phone number or password is required" });
+    }
       password = phone;
     }
 
