@@ -1,5 +1,18 @@
 const Ticket = require('../models/Ticket');
 
+// Generate random custom ticket ID like TKT-284193
+const generateCustomId = async () => {
+  let customId;
+  let exists = true;
+
+  while (exists) {
+    const randomNum = Math.floor(100000 + Math.random() * 900000); 
+    customId = `TKT-${randomNum}`;
+    exists = await Ticket.findOne({ customId });
+  }
+
+  return customId;
+};
 
 // Create a new ticket
 const createTicket = async (req, res) => {
@@ -10,14 +23,28 @@ const createTicket = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required.' });
     }
 
-    const ticket = await Ticket.create({ name, role, email, description, priority, subject });
+    const customId = await generateCustomId();
 
-    return res.status(201).json({ message: 'Ticket submitted successfully.', ticket });
+    const ticket = await Ticket.create({
+      name,
+      role,
+      email,
+      description,
+      priority,
+      subject,
+      ticketId: customId
+    });
+
+    return res.status(201).json({
+      message: 'Ticket submitted successfully.',
+      ticket
+    });
   } catch (error) {
     console.error('Create ticket error:', error);
     return res.status(500).json({ message: 'Failed to submit ticket.' });
   }
 };
+
 
 // Get all tickets
 const getAllTickets = async (req, res) => {
