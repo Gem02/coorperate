@@ -1,5 +1,6 @@
 const Ticket = require('../models/Ticket');
 
+
 // Create a new ticket
 const createTicket = async (req, res) => {
   try {
@@ -74,5 +75,5 @@ module.exports = {
   createTicket,
   getAllTickets,
   getTicketById,
-  updateTicketStatus,
+  updateTicketStatus
 };

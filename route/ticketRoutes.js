@@ -7,9 +7,9 @@ const {
   updateTicketStatus,
 } = require('../controller/ticketController');
 
-router.post('/tickets', createTicket);
-router.get('/tickets', getAllTickets);
-router.get('/tickets/:ticketId', getTicketById);
-router.patch('/tickets/:ticketId/status', updateTicketStatus);
+router.post('/', createTicket);
+router.get('/', getAllTickets);
+router.get('/:ticketId', getTicketById);
+router.patch('/:ticketId/status', updateTicketStatus);
 
 module.exports = router;

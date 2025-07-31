@@ -9,7 +9,8 @@ const { secureHeaders,limiter,hpp} = require('./middleware/security');
 
 const authRoutes = require('./route/authRoutes');
 const userRoutes = require('./route/userRoute');
-const product = require('./route/productRoutes')
+const product = require('./route/productRoutes');
+const tickets = require('./route/ticketRoutes');
 
 const app = express();
 
@@ -31,6 +32,7 @@ console.log('the app loaded here')
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', product);
+app.use('/api/tickets', tickets);
 
 
 app.get("/", (req, res) => {
