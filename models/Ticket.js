@@ -9,7 +9,9 @@ const TicketSchema = new mongoose.Schema({
   description: { type: String, required: true },
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'low' },
   status: { type: String, enum: ['open', 'in-progress', 'resolved', 'closed'], default: 'open' },
+  reply: { type: String, default: '' }, // New field for admin reply
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date }, // New field for tracking updates
 });
 
 module.exports = mongoose.model('Ticket', TicketSchema);
