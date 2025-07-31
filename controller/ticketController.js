@@ -14,7 +14,6 @@ const generateCustomId = async () => {
   return customId;
 };
 
-// Create a new ticket
 const createTicket = async (req, res) => {
   try {
     const { name, role, email, description, priority, subject } = req.body;
@@ -44,7 +43,6 @@ const createTicket = async (req, res) => {
     return res.status(500).json({ message: 'Failed to submit ticket.' });
   }
 };
-
 
 // Get all tickets
 const getAllTickets = async (req, res) => {
