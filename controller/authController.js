@@ -62,30 +62,37 @@ const verifyCode = async (req, res) => {
     }
 };
 
- const newPassword = async (req, res) => {
-    try {
-        const email = validator.normalizeEmail(req.body.email || '');
-        const password = validator.escape(req.body.password || '');
+const changePassword = async (req, res) => {
+  try {
+    const {userId} = req.params; 
+    const currentPassword = validator.escape(req.body.currentPassword || '');
+    const newPassword = validator.escape(req.body.newPassword || '');
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required.' });
+    }
 
-        const user = await UserModel.findOne({ email });
+    const user = await UserModel.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
-        if (!user) {
-        return res.status(400).json({ message: 'User does not exist' });
-        }
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect.' });
+    }
 
-        user.password = password;
-        await user.save();
+    // Hash new password explicitly
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    await user.save();
 
-        return res.status(200).json({ message: 'Password updated successfully' });
+    return res.status(200).json({ message: 'Password updated successfully.' });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error('Password change error:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
   }
-}; 
+};
 
 const registerUser = async (req, res) => {
 
@@ -390,4 +397,4 @@ const logout = (req, res) => {
     }
 } */
 
-module.exports = { registerUser, login, updateUserProfile, logout, sendForgotPasswordCode, verifyCode, newPassword, loginAdmin};
+module.exports = { registerUser, login, updateUserProfile, logout, sendForgotPasswordCode, verifyCode, changePassword, loginAdmin};
