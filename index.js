@@ -15,7 +15,6 @@ const tickets = require('./route/ticketRoutes');
 const app = express();
 
 connectDB();
-
 app.use(cookieParser());
 app.use(express.json());
 app.use(secureHeaders);

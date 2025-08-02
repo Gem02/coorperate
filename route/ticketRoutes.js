@@ -9,8 +9,8 @@ const {
 
 router.post('/', createTicket);
 router.get('/', getAllTickets);
-router.get('/:ticketId', getTicketById);
-router.patch('/:ticketId/status', updateTicketStatus);
-router.patch('/reply/:ticketId', replyToTicket);
+router.get('/:id', getTicketById);
+router.patch('/:id/status', updateTicketStatus);
+router.patch('/reply/:id', replyToTicket);
 
 module.exports = router;

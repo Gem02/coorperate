@@ -57,8 +57,8 @@ const getAllTickets = async (req, res) => {
 // Get a single ticket
 const getTicketById = async (req, res) => {
   try {
-    const { ticketId } = req.params;
-    const ticket = await Ticket.findById(ticketId);
+    const { id } = req.params;
+    const ticket = await Ticket.findById(id);
 
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket not found.' });
@@ -73,7 +73,7 @@ const getTicketById = async (req, res) => {
 // Update ticket status
 const updateTicketStatus = async (req, res) => {
   try {
-    const { ticketId } = req.params;
+    const { id} = req.params;
     const { status } = req.body;
 
     if (!['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
@@ -81,7 +81,7 @@ const updateTicketStatus = async (req, res) => {
     }
 
     const ticket = await Ticket.findOneAndUpdate(
-      { ticketId },
+      { id },
       { status, updatedAt: new Date() },
       { new: true }
     );
@@ -98,7 +98,7 @@ const updateTicketStatus = async (req, res) => {
 
 const replyToTicket = async (req, res) => {
   try {
-    const { ticketId } = req.params;
+    const { id } = req.params;
     const { reply } = req.body;
 
     if (!reply) {
@@ -106,7 +106,7 @@ const replyToTicket = async (req, res) => {
     }
 
     const ticket = await Ticket.findOneAndUpdate(
-      { ticketId },
+      { id },
       { reply, updatedAt: new Date() },
       { new: true }
     );
