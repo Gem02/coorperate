@@ -73,15 +73,15 @@ const getTicketById = async (req, res) => {
 // Update ticket status
 const updateTicketStatus = async (req, res) => {
   try {
-    const { id} = req.params;
+    const { id } = req.params;
     const { status } = req.body;
 
     if (!['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status value.' });
     }
 
-    const ticket = await Ticket.findOneAndUpdate(
-      { id },
+    const ticket = await Ticket.findByIdAndUpdate(
+      id,
       { status, updatedAt: new Date() },
       { new: true }
     );
@@ -96,6 +96,7 @@ const updateTicketStatus = async (req, res) => {
   }
 };
 
+
 const replyToTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -105,8 +106,8 @@ const replyToTicket = async (req, res) => {
       return res.status(400).json({ message: 'Reply message is required.' });
     }
 
-    const ticket = await Ticket.findOneAndUpdate(
-      { id },
+    const ticket = await Ticket.findByIdAndUpdate(
+      id,
       { reply, updatedAt: new Date() },
       { new: true }
     );
@@ -121,6 +122,7 @@ const replyToTicket = async (req, res) => {
     return res.status(500).json({ message: 'Failed to reply to ticket.' });
   }
 };
+
 
 
 module.exports = {
