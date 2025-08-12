@@ -1,95 +1,87 @@
-// this file is in the controller/ipeController
+// webhookController.js
+const crypto = require("crypto");
+const Payment = require("../models/Payment");
+const Product = require("../models/Product");
 
-require('dotenv').config();
-const axios = require('axios');
-const validator = require('validator');
-const { balanceCheck } = require('../utilities/compareBalance');
-const {saveTransaction, saveDataHistory} = require('../utilities/saveTransaction');
-
-const generateTransactionRef = () => 'IPE-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-
-const verifyIPE = async (req, res) => {
-  const { trackingId, userId, pin, amount } = req.body;
-  console.log("IPE Verification Request:", req.body);
-
+const handlePaystackWebhook = async (req, res) => {
   try {
-    const cleanTrackingId = (trackingId || '').trim();
-    if (!validator.isAlphanumeric(cleanTrackingId) || cleanTrackingId.length < 6) {
-      return res.status(400).json({ message: 'Invalid Tracking ID.' });
+    const secret = process.env.PAYSTACK_SECRET_KEY;
+    if (!secret) {
+      console.error("ERROR: PAYSTACK_SECRET_KEY is not configured");
+      return res.status(500).json({ status: false, message: "Server configuration error" });
     }
 
-    if (!amount || isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ message: 'Invalid amount.' });
+    const hash = crypto.createHmac("sha512", secret).update(req.body).digest("hex");
+    const signature = req.headers["x-paystack-signature"];
+
+    if (!signature) {
+      console.error("ERROR: Missing Paystack signature header");
+      return res.status(400).json({ status: false, message: "Missing signature header" });
     }
 
-    const userAcc = await balanceCheck(userId, amount, pin);
-    if (!userAcc) {
-      return res.status(403).json({ message: 'User balance or PIN invalid.' });
+    if (hash !== signature) {
+      console.error("ERROR: Invalid signature");
+      return res.status(400).json({ status: false, message: "Invalid signature" });
     }
 
-    const apiKey = process.env.DATA_VERIFY_KEY;
-    const payload = { api_key: apiKey, trackingID: cleanTrackingId };
-    const transactionReference = generateTransactionRef();
+    console.log("✓ Signature verification passed");
 
-    // Step 1: Submit tracking ID
-     const { data: initialRes } = await axios.post(
-      `https://dataverify.com.ng/api/developers/ipe`,
-      payload,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    // Paystack sends body as Buffer when using express.raw()
+    const event = JSON.parse(req.body.toString("utf8"));
+    console.log("Event Type:", event.event);
 
-    if (!initialRes || initialRes.response_code !== '00') {
-      console.error('IPE Verification Error stage 1:', initialRes);
-      return res.status(400).json({ message: 'Error Submitting IPE.' });
-    } 
+    // Acknowledge webhook first
+    res.status(200).json({ received: true });
 
-    // Step 2: Get Final Result
-    const response = await axios.post(
-      `https://dataverify.com.ng/api/developers/ipe_status.php`,
-      payload,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    const finalRes = response.data;
-    if (!finalRes || finalRes.response_code !== '00') {
-      console.error('the error is', finalRes);
-      return res.status(400).json({ message: 'IPE verification failed at final stage.' });
+    // Process the event asynchronously
+    if (event.event === "charge.success") {
+      await processSuccessfulCharge(event.data);
     }
-
-    // ✅ Debit user
-    userAcc.balance -= amount;
-    await userAcc.save();
-
-    // 📝 Save data & transaction
-    await saveDataHistory({
-      data: finalRes,
-      dataFor: 'IPE-Slip',
-      userId,
-    });
-
-    await saveTransaction({
-      user: userId,
-      accountNumber: userAcc.accountNumber,
-      amount,
-      transactionReference,
-      TransactionType: 'IPE-Verification',
-      type: 'debit',
-      description: `Verified IPE ${cleanTrackingId}`,
-    });
-
-    return res.status(200).json({
-      message: 'IPE verified successfully',
-      data: finalRes,
-      balance: userAcc.balance,
-    });
-
   } catch (error) {
-    console.error('IPE Verification Error:', error.response?.data || error.message);
-    return res.status(500).json({
-      message: error.message || 'Server error during IPE verification',
-    });
+    console.error("ERROR processing webhook:", error);
   }
 };
 
+async function processSuccessfulCharge(data) {
+  try {
+    console.log("\nProcessing successful charge...");
 
-module.exports = { verifyIPE };
+    // Parse cart items from metadata
+    let cartItems = [];
+    try {
+      cartItems = JSON.parse(data.metadata.cart_items || "[]");
+    } catch (err) {
+      console.error("Failed to parse cart_items:", err);
+    }
+
+    // 1. Save payment to DB
+    const paymentExists = await Payment.findOne({ transactionRef: data.reference });
+    if (!paymentExists) {
+      await Payment.create({
+        userId: data.metadata.userId,
+        productId: cartItems[0]?._id || null,
+        amount: data.amount / 100, // convert from kobo
+        currency: data.currency,
+        status: "success",
+        transactionRef: data.reference,
+        paymentGateway: "Paystack",
+        paidAt: data.paid_at,
+      });
+      console.log("✓ Payment saved to database");
+    } else {
+      console.log("Payment already exists, skipping creation");
+    }
+
+    // 2. Update salesCount for each product in cart
+    for (const item of cartItems) {
+      await Product.findByIdAndUpdate(item._id, {
+        $inc: { salesCount: item.quantity || 1 },
+      });
+      console.log(`✓ Updated sales count for product: ${item.name}`);
+    }
+  } catch (error) {
+    console.error("ERROR in processSuccessfulCharge:", error);
+  }
+}
+
+module.exports = { handlePaystackWebhook };

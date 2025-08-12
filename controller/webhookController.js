@@ -1,116 +1,87 @@
 // webhookController.js
-const crypto = require( "crypto");
-const User = require( "../models/User.js");
+const crypto = require("crypto");
+const Payment = require("../models/paymentSchema");
+const Product = require("../models/Product");
 
- const handlePaystackWebhook = async (req, res) => {
-  
+const handlePaystackWebhook = async (req, res) => {
   try {
-    // 1. Verify the webhook secret exists
     const secret = process.env.PAYSTACK_SECRET_KEY;
     if (!secret) {
-      console.error('ERROR: PAYSTACK_SECRET_KEY is not configured');
+      console.error("ERROR: PAYSTACK_SECRET_KEY is not configured");
       return res.status(500).json({ status: false, message: "Server configuration error" });
     }
 
-    // 2. Verify the webhook signature
-    const hash = crypto
-      .createHmac("sha512", secret)
-      .update(req.body)
-      .digest("hex");
-    
+    const hash = crypto.createHmac("sha512", secret).update(req.body).digest("hex");
     const signature = req.headers["x-paystack-signature"];
+
     if (!signature) {
-      console.error('ERROR: Missing Paystack signature header');
+      console.error("ERROR: Missing Paystack signature header");
       return res.status(400).json({ status: false, message: "Missing signature header" });
     }
 
     if (hash !== signature) {
-      console.error('ERROR: Invalid signature', {
-        computedHash: hash,
-        receivedSignature: signature
-      });
+      console.error("ERROR: Invalid signature");
       return res.status(400).json({ status: false, message: "Invalid signature" });
     }
 
-    console.log('✓ Signature verification passed');
+    console.log("✓ Signature verification passed");
 
-    // 3. Process the webhook event
+    // Paystack sends body as Buffer when using express.raw()
     const event = JSON.parse(req.body.toString("utf8"));
-    console.log('Event Type:', event.event);
-    console.log('Event Data:', JSON.stringify(event.data, null, 2));
+    console.log("Event Type:", event.event);
 
-    // Always respond immediately to acknowledge receipt
+    // Acknowledge webhook first
     res.status(200).json({ received: true });
 
-    // 4. Handle specific event types
+    // Process the event asynchronously
     if (event.event === "charge.success") {
       await processSuccessfulCharge(event.data);
-    } else if (event.event === "subscription.create") {
-      console.log('Subscription created event received');
-    } else {
-      console.log(`Unhandled event type: ${event.event}`);
     }
-
   } catch (error) {
-    console.error('ERROR processing webhook:', error);
-    // Note: We already sent a 200 response, so we can't change it now
-    // This is why we send the 200 immediately after signature verification
+    console.error("ERROR processing webhook:", error);
   }
 };
 
 async function processSuccessfulCharge(data) {
   try {
-    console.log('\nProcessing successful charge...');
-    console.log("the data is",data)
-    // Extract transaction details
-    const email = data.customer?.email;
-    const amount = data.amount / 100; // Convert from kobo to naira
-    const reference = data.reference;
-    const transactionId = data.id;
+    console.log("\nProcessing successful charge...");
 
-    if (!email) {
-      console.error('ERROR: No customer email in charge data');
-      return;
+    // Parse cart items from metadata
+    let cartItems = [];
+    try {
+      cartItems = JSON.parse(data.metadata.cart_items || "[]");
+    } catch (err) {
+      console.error("Failed to parse cart_items:", err);
     }
 
-    console.log(`Processing transaction ${reference} for ${email}, amount: ₦${amount}`);
-
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      console.error(`ERROR: User not found for email: ${email}`);
-      return;
+    // 1. Save payment to DB
+    const paymentExists = await Payment.findOne({ transactionRef: data.reference });
+    if (!paymentExists) {
+      await Payment.create({
+        userId: data.metadata.userId,
+        productId: cartItems[0]?._id || null,
+        amount: data.amount / 100, // convert from kobo
+        currency: data.currency,
+        status: "success",
+        transactionRef: data.reference,
+        paymentGateway: "Paystack",
+        paidAt: data.paid_at,
+      });
+      console.log("✓ Payment saved to database");
+    } else {
+      console.log("Payment already exists, skipping creation");
     }
 
-   
-    // Create transaction record
-   /*  const transaction = await Transaction.create({
-      user: user._id,
-      type: "deposit",
-      category: "income",
-      amount,
-      currency: "NGN",
-      description: "Deposit via Paystack",
-      status: "completed",
-      reference,
-      balanceAfter: wallet.balance,
-      metadata: {
-        paymentMethod: "paystack",
-        gateway: "Paystack",
-        gatewayTransactionId: transactionId,
-        customerEmail: email,
-        customerId: data.customer?.id,
-      },
-    }); */
-
-    console.log(`Created transaction record: ${transaction._id}`);
-
-    // ✅ Trigger referral reward for compounding deposit
-    await rewardReferrerOnDeposit(user._id, amount);
-
+    // 2. Update salesCount for each product in cart
+    for (const item of cartItems) {
+      await Product.findByIdAndUpdate(item._id, {
+        $inc: { salesCount: item.quantity || 1 },
+      });
+      console.log(`✓ Updated sales count for product: ${item.name}`);
+    }
   } catch (error) {
-    console.error('ERROR in processSuccessfulCharge:', error);
+    console.error("ERROR in processSuccessfulCharge:", error);
   }
 }
 
-module.exports = {handlePaystackWebhook}
+module.exports = { handlePaystackWebhook };
