@@ -61,7 +61,7 @@ const User = require( "../models/User.js");
 async function processSuccessfulCharge(data) {
   try {
     console.log('\nProcessing successful charge...');
-
+    console.log("the data is",data)
     // Extract transaction details
     const email = data.customer?.email;
     const amount = data.amount / 100; // Convert from kobo to naira
