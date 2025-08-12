@@ -290,7 +290,7 @@ const updateUserProfile = async (req, res) => {
         lastName: updatedUser.lastName,
         email: updatedUser.email,
         phone: updatedUser.phone,
-        country: updatedUser.country,
+        country: updatedUser.country, 
         state: updatedUser.state,
         photo: updatedUser.photo,
         role: updatedUser.role,
