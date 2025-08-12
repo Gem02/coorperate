@@ -8,6 +8,7 @@ const { secureHeaders,limiter,hpp} = require('./middleware/security');
 
 
 const authRoutes = require('./route/authRoutes');
+const webhookRoutes = require('./route/webhookRoute');
 const userRoutes = require('./route/userRoute');
 const product = require('./route/productRoutes');
 const tickets = require('./route/ticketRoutes');
@@ -15,15 +16,21 @@ const tickets = require('./route/ticketRoutes');
 const app = express();
 
 connectDB();
-app.use(cookieParser());
-app.use(express.json());
-app.use(secureHeaders);
-app.use(hpp);
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: ['http://localhost:5173','https://ambassador-admin.vercel.app','https://ay-developers.netlify.app','https://admin-ambassador.netlify.app','https://aydevelopers.netlify.app' ],
   methods: 'GET,POST,PUT,DELETE,PATCH',
   credentials: true,
 }));
+
+// Webhook route (must come after CORS but before json parser)
+app.use("/paystack/webhook", express.raw({ type: "application/json" }), webhookRoutes);
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(secureHeaders);
+app.use(hpp);
 
 app.use(limiter);
 console.log('the app loaded here')

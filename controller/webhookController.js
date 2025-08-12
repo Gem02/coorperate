@@ -1,10 +1,8 @@
 // webhookController.js
-import crypto from "crypto";
-import Wallet from "../models/Wallet.js";
-import Transaction from "../models/Transaction.js";
-import User from "../models/User.js";
+const crypto = require( "crypto");
+const User = require( "../models/User.js");
 
-export const handlePaystackWebhook = async (req, res) => {
+ const handlePaystackWebhook = async (req, res) => {
   
   try {
     // 1. Verify the webhook secret exists
@@ -84,25 +82,7 @@ async function processSuccessfulCharge(data) {
       return;
     }
 
-    // Find or create wallet
-    let wallet = await Wallet.findOne({ user: user._id });
-    if (!wallet) {
-      console.log(`No wallet found for user ${user._id}, creating new wallet`);
-      wallet = new Wallet({ user: user._id, balance: 0 });
-    }
-
-    // Check for duplicate transaction
-    const existingTx = await Transaction.findOne({ reference });
-    if (existingTx) {
-      console.log(`Transaction ${reference} already processed, skipping`);
-      return;
-    }
-
-    // Update wallet balance
-    wallet.balance += amount;
-    await wallet.save();
-    console.log(`Updated wallet balance for user ${user._id}: ₦${wallet.balance}`);
-
+   
     // Create transaction record
    /*  const transaction = await Transaction.create({
       user: user._id,
@@ -132,3 +112,5 @@ async function processSuccessfulCharge(data) {
     console.error('ERROR in processSuccessfulCharge:', error);
   }
 }
+
+module.exports = {handlePaystackWebhook}
