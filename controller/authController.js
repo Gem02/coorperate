@@ -141,7 +141,7 @@ const registerUser = async (req, res) => {
       role,
     });
 
-    await welcomeEmail(user.email, user.firstName, user.lastName);
+    await welcomeEmail({email: user.email, firstName:user.firstName, lastName:user.lastName});
 
     return res.status(201).json({
       message: "User created successfully",
