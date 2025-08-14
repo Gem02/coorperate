@@ -221,6 +221,68 @@ const login = async (req, res) => {
   }
 };
 
+//ambassador login
+const ambassadorLogin = async (req, res) => {
+  try {
+    const email = validator.normalizeEmail(req.body.email || '');
+    const password = req.body.password || '';
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const userInfo = await UserModel.findOne({ email }).select("+password");
+
+    if (!userInfo) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    if (userInfo.role != 'ambassador') {
+      return res.status(401).json({ message: "Invalid Role. You are not an Ambassador" });
+    }
+
+    // ❌ Deny login if user is suspended
+    if (userInfo.suspended) {
+      return res.status(403).json({ message: "Your account has been suspended. Contact support." });
+    }
+
+    const isCorrect = await bcrypt.compare(password, userInfo.password);
+    if (!isCorrect) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    userInfo.lastLogin = new Date();
+    await userInfo.save();
+
+    const accessToken = generateAccessToken(userInfo._id, userInfo.email, userInfo.role);
+    const refreshToken = generateRefreshToken(userInfo._id, userInfo.email, userInfo.role);
+
+    res.cookie("accessToken", accessToken, {
+      maxAge: 15 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    });
+
+    return res.status(200).json({
+      id: userInfo._id,
+      firstName: userInfo.firstName,
+      lastName: userInfo.lastName,
+      email: userInfo.email,
+      role: userInfo.role,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Login failed. Please try again." });
+  }
+};
 
 const updateUserProfile = async (req, res) => {
   try {
