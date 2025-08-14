@@ -585,4 +585,4 @@ const logout = (req, res) => {
     }
 } */
 
-module.exports = { registerUser, login, updateUserProfile, logout, sendForgotPasswordCode, verifyCode, changePassword, loginAdmin};
+module.exports = { registerUser, login, ambassadorLogin, adminLogin, managerLogin, updateUserProfile, logout, sendForgotPasswordCode, verifyCode, changePassword, loginAdmin};
