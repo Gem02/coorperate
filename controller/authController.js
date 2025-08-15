@@ -1,5 +1,5 @@
 // this file is in the controller/authController
-
+const Wallet = require('../models/Wallet')
 const UserModel = require('../models/User');
 const { generateAccessToken, generateRefreshToken } = require('../utilities/generateToken');
 const bcrypt = require('bcryptjs');
@@ -8,140 +8,101 @@ const forgotPasswordModel = require('../models/forgotPassword');
 const {welcomeEmail} = require('../utilities/emailTemplate');
 
 
-
-const sendForgotPasswordCode = async (req, res) =>{
-    try {
-        const email = validator.normalizeEmail(req.body.email || '');
-        if (!email) {
-            return res.status(400).json({ message: 'Valid email is required' });
-        }
-        const userExists = await UserModel.findOne({ email });
-        if (!userExists) {
-            return res.status(400).json({message: 'No account found with this email'})
-        }
-        const token = Math.floor(Math.random() * (999999 - 100000 + 1) + 100000);
-    
-        let user = await forgotPasswordModel.findOne({email});
-        if (user) {
-            return res.status(400).json({message: 'Try again after 5 mins'})
-        }
-
-        user = await forgotPasswordModel.create({ email, token });
-        sendVerificationEmail(email, token);
-        return res.status(200).json({message: 'verification sent', status: true});
-    
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Sorry a server error occured' });
-    }
-};
-
-const verifyCode = async (req, res) => {
-    try {
-        const email = validator.normalizeEmail(req.body.email || '');
-        const code = validator.escape(req.body.code || '');
-
-        if (!email || !code) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        const user = await forgotPasswordModel.findOne({ email });
-
-        if (!user || user.token !== code) {
-            return res.status(400).json({ message: 'Invalid or expired verification code' });
-        }
-
-        
-        await forgotPasswordModel.deleteOne({ email });
-
-        res.status(200).json({ message: 'Email verified successfully', status: true });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Server error' });
-    }
-};
-
-const changePassword = async (req, res) => {
-  try {
-    const {userId} = req.params; 
-    const currentPassword = validator.escape(req.body.currentPassword || '');
-    const newPassword = validator.escape(req.body.newPassword || '');
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'Current and new passwords are required.' });
-    }
-
-    const user = await UserModel.findById(userId).select('+password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
-
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Current password is incorrect.' });
-    }
-
-    user.password = newPassword;
-    await user.save();
-
-    return res.status(200).json({ message: 'Password updated successfully.' });
-  } catch (error) {
-    console.error('Password change error:', error);
-    return res.status(500).json({ message: 'Internal server error.' });
-  }
-};
-
 const registerUser = async (req, res) => {
-
   try {
-    // Extract and sanitize fields
-    const firstName = validator.escape(req.body.firstName || '');
-    const lastName = validator.escape(req.body.lastName || '');
-    const email = validator.normalizeEmail(req.body.email || '');
-    const phone = validator.escape(req.body.phone || '');
-    const country = validator.escape(req.body.country || '');
-    const state = validator.escape(req.body.state || '');
-    const lga = validator.escape(req.body.lga || '');
-    const role = validator.escape(req.body.role || 'user');
-    const photo = req.body.photo || '';
-    let password = req.body.password || '';
+    const {
+      firstName = "",
+      lastName = "",
+      email = "",
+      phone = "",
+      country = "",
+      state = "",
+      lga = "",
+      role = "user",
+      photo = "",
+      managerId = null,
+      ambassadorId = null,
+      password = "" // can be empty
+    } = req.body;
 
+    // Sanitize
+    const clean = {
+      firstName: validator.escape(firstName),
+      lastName: validator.escape(lastName),
+      email: validator.normalizeEmail(email || "") || "",
+      phone: validator.escape(phone),
+      country: validator.escape(country || ""),
+      state: validator.escape(state || ""),
+      lga: validator.escape(lga || ""),
+      role: validator.escape(role),
+      photo
+    };
 
-    // Fallback: use phone as password if none provided
-    if (!password) {
-      if (!phone) {
-      return res.status(400).json({ message: "Phone number or password is required" });
+    // Required checks
+    if (!clean.firstName || !clean.lastName || !clean.email) {
+      return res.status(400).json({ message: "First name, last name, and email are required" });
     }
-      password = phone;
+    if (!clean.phone) {
+      return res.status(400).json({ message: "Phone number is required" });
     }
 
-    // Check for required fields
-    if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: "First name, last name, email, and password are required" });
-    }
-
-    // Check if user already exists
-    const userExists = await UserModel.findOne({ email });
-    if (userExists) {
+    // Check for duplicate email
+    const exists = await UserModel.findOne({ email: clean.email });
+    if (exists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Optional: validate managerId / ambassadorId if provided
+    let managerDoc = null;
+    if (managerId) {
+      managerDoc = await UserModel.findById(managerId);
+      if (!managerDoc || managerDoc.role !== "manager") {
+        return res.status(400).json({ message: "Invalid manager" });
+      }
+    }
+
+    let ambassadorDoc = null;
+    if (ambassadorId) {
+      ambassadorDoc = await UserModel.findById(ambassadorId);
+      if (!ambassadorDoc || ambassadorDoc.role !== "ambassador") {
+        return res.status(400).json({ message: "Invalid ambassador" });
+      }
+    }
+
+    // If no password sent, default to phone
+    const finalPassword = password && password.trim() !== "" ? password : clean.phone;
+
     // Create user
     const user = await UserModel.create({
-      firstName,
-      lastName,
-      email,
-      phone,
-      country,
-      state,
-      lga,
-      password,
-      photo,
-      role,
+      firstName: clean.firstName,
+      lastName: clean.lastName,
+      email: clean.email,
+      phone: clean.phone,
+      country: clean.country,
+      state: clean.state,
+      lga: clean.lga,
+      password: finalPassword, // will be hashed in pre-save
+      photo: clean.photo,
+      role: clean.role,
+      managerId: managerDoc ? managerDoc._id : null,
+      ambassadorId: ambassadorDoc ? ambassadorDoc._id : null
     });
 
-    await welcomeEmail({email: user.email, firstName:user.firstName, lastName:user.lastName});
+      await Wallet.create({
+      userId: user._id,
+      balance: 0,
+      transactions: []
+    });
+    // Send welcome email (non-blocking)
+    try {
+      await welcomeEmail({
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      });
+    } catch (e) {
+      console.error("Welcome email failed:", e.message);
+    }
 
     return res.status(201).json({
       message: "User created successfully",
@@ -152,14 +113,13 @@ const registerUser = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-      },
+        managerId: user.managerId,
+        ambassadorId: user.ambassadorId
+      }
     });
   } catch (error) {
     console.error("❌ Registration error:", error);
-    return res.status(500).json({
-      message: "Registration failed due to server error",
-      error: error.message,
-    });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -407,6 +367,89 @@ const managerLogin = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ message: "Login failed. Please try again." });
+  }
+};
+
+const sendForgotPasswordCode = async (req, res) =>{
+    try {
+        const email = validator.normalizeEmail(req.body.email || '');
+        if (!email) {
+            return res.status(400).json({ message: 'Valid email is required' });
+        }
+        const userExists = await UserModel.findOne({ email });
+        if (!userExists) {
+            return res.status(400).json({message: 'No account found with this email'})
+        }
+        const token = Math.floor(Math.random() * (999999 - 100000 + 1) + 100000);
+    
+        let user = await forgotPasswordModel.findOne({email});
+        if (user) {
+            return res.status(400).json({message: 'Try again after 5 mins'})
+        }
+
+        user = await forgotPasswordModel.create({ email, token });
+        sendVerificationEmail(email, token);
+        return res.status(200).json({message: 'verification sent', status: true});
+    
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Sorry a server error occured' });
+    }
+};
+
+const verifyCode = async (req, res) => {
+    try {
+        const email = validator.normalizeEmail(req.body.email || '');
+        const code = validator.escape(req.body.code || '');
+
+        if (!email || !code) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        const user = await forgotPasswordModel.findOne({ email });
+
+        if (!user || user.token !== code) {
+            return res.status(400).json({ message: 'Invalid or expired verification code' });
+        }
+
+        
+        await forgotPasswordModel.deleteOne({ email });
+
+        res.status(200).json({ message: 'Email verified successfully', status: true });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const {userId} = req.params; 
+    const currentPassword = validator.escape(req.body.currentPassword || '');
+    const newPassword = validator.escape(req.body.newPassword || '');
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required.' });
+    }
+
+    const user = await UserModel.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect.' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password updated successfully.' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 };
 
