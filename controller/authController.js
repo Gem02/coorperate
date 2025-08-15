@@ -559,30 +559,5 @@ const logout = (req, res) => {
 
 }
 
-/* const passResetRegisteration = async(req, res) =>{
-    try {
-        const {email} = req.body;
-        const token = Math.floor(Math.random() * (999999 - 100000 + 1) + 100000);
-    
-        let user = await forgotPasswordModel.findOne({email});
-        if (user) {
-            return res.status(400).json({message: 'Error try again later'})
-        }
-        const validUser = await UserModel.findOne({email});
-
-        if (validUser){
-            const name = 'UNKNOWN';
-            user = await forgotPasswordModel.create({ email, name, token });
-            sendVerificationPassword(email, token);
-            return res.status(200).json({message: 'verification sent', status: true});
-        } else{
-            return res.status(400).json({message: 'No account is linked to this email'})
-        }
-        
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Sorry a server error occured' });
-    }
-} */
 
 module.exports = { registerUser, login, ambassadorLogin, adminLogin, managerLogin, updateUserProfile, logout, sendForgotPasswordCode, verifyCode, changePassword, loginAdmin};
