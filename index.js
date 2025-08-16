@@ -13,6 +13,7 @@ const userRoutes = require('./route/userRoute');
 const product = require('./route/productRoutes');
 const tickets = require('./route/ticketRoutes');
 const paymentRoute = require('./route/paymentRoutes');
+const report = require('./route/managerReportRoutes');
 
 const app = express();
 
@@ -40,7 +41,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', product);
 app.use('/api/tickets', tickets);
-app.use('/api/payment', paymentRoute)
+app.use('/api/payment', paymentRoute);
+app.use('/api/reports/', report);
 
 
 app.get("/", (req, res) => {

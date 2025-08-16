@@ -1,11 +1,11 @@
-import dotenv from "dotenv";
+const dotenv = require("dotenv");
 dotenv.config();
-import { Resend } from 'resend';
+const { Resend } = require('resend');
 
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function welcomeEmail({ email, firstName, lastName }) {
+ const welcomeEmail = async({ email, firstName, lastName }) => {
   const html = `
     <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; color: #333;">
       <div style="max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
@@ -35,92 +35,7 @@ export async function welcomeEmail({ email, firstName, lastName }) {
   });
 }
 
-
-export const sendEmail2 = async () => {
-  try {
-  await resend.emails.send({
-    from: 'Ay Developers <support@aydevelopers.com.ng>',
-    to: ['mangaigodwin@gmail.com'],
-    subject: 'hello world',
-    html: '<p>it works!</p>',
-  });
-  console.log(
-    "sent"
-  )
-  } catch (error) {
-    console.log(error)
-  }
-}
-
- async function sendEmail({ to, subject, html }) {
-  try {
-    const info = await transporter.sendMail({
-      from: 'support@frugalvest.com.ng', // your verified domain sender
-      to,
-      subject,
-      html,
-    });
-
-    console.log('Email sent:', info.messageId);
-    return true;
-  } catch (err) {
-    console.error('Email sending failed:', err.message);
-    return false;
-  }
-} 
-
- export async function sendWelcomeEmail({ email, firstName, lastName, compoundingNumber, verificationLink }) {
-  const fullName = `${firstName} ${lastName}`;
-  const html = `
-    <div style="background-color: #f5f7fb; padding: 40px 0; font-family: 'Segoe UI', Roboto, sans-serif; color: #333;">
-      <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
-        <div style="background-color: #0046d4; padding: 24px 32px;">
-          <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Welcome to FrugalVest 🎉</h1>
-        </div>
-        <div style="padding: 32px;">
-          <p style="font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
-            Hi <strong>${fullName}</strong>,
-          </p>
-          <p style="font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-            Thank you for joining <strong>FrugalVest</strong>. We're excited to help you grow your wealth through our compounding investment system.
-          </p>
-          <div style="padding: 16px; background-color: #f0f4ff; border-radius: 8px; margin-bottom: 24px;">
-            <p style="margin: 0; font-size: 16px; color: #0046d4;">Your Compounding Number:</p>
-            <h2 style="margin: 8px 0 0; font-size: 20px; color: #222;">${compoundingNumber}</h2>
-          </div>
-          <p style="font-size: 16px; line-height: 1.6;">
-            Please confirm your email address to activate your account.
-          </p>
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="${verificationLink}" 
-              style="background-color: #0046d4; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block;">
-              Verify My Email
-            </a>
-          </div>
-          <p style="font-size: 14px; color: #666; margin-top: 0;">
-            <strong>Note:</strong> This verification link will expire in <strong>24 hours</strong>. If it expires, you'll need to request a new one.
-          </p>
-          <p style="font-size: 14px; color: #666; margin-top: 32px;">
-            If you didn’t create this account, you can safely ignore this message.
-          </p>
-        </div>
-        <div style="background-color: #f8f9fb; padding: 20px 32px; text-align: center;">
-          <p style="font-size: 13px; color: #999;">
-            &copy; ${new Date().getFullYear()} FrugalVest. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  return await sendEmail({
-    to: email,
-    subject: 'Welcome to FrugalVest!',
-    html,
-  });
-} 
-
-export async function sendForgotPasswordEmail({ email, firstName, lastName, token }) {
+const sendForgotPasswordEmail = async ({ email, firstName, lastName, token }) => {
   const html = `
     <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; color: #333;">
       <div style="max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
@@ -150,9 +65,9 @@ export async function sendForgotPasswordEmail({ email, firstName, lastName, toke
   return await resend.emails.send({
     from: 'Ay Concept <support@aydevelopers.com.ng>',
     to: email,
-    subject: 'Your FrugalVest Password Reset Code',
+    subject: 'Password Reset Code',
     html,
   });
 }
 
-
+module.exports = {welcomeEmail}
