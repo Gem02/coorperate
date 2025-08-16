@@ -24,6 +24,30 @@ const userSchema = new mongoose.Schema(
     // ambassador this person belongs under (users will have this)
     ambassadorId:{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
 
+    bankDetails: {
+      bankName: {
+        type: String,
+        trim: true,
+        select: false // Don't return by default in queries
+      },
+      accountNumber: {
+        type: String,
+        trim: true,
+        select: false
+      },
+      accountName: {
+        type: String,
+        trim: true
+      },
+      verified: {
+        type: Boolean,
+        default: false
+      },
+      verifiedAt: {
+        type: Date
+      }
+    },
+
     lastLogin:   { type: Date },
   },
   { timestamps: true }
