@@ -1,7 +1,7 @@
 // routes/bankWalletRoutes.js
 const express = require("express");
 const router = express.Router();
-const bankWalletController = require("../controllers/bankWalletController");
+const bankWalletController = require("../controller/bankWalletController");
 //const { authenticateUser, verifyOwnership } = require("../middleware/auth");
 
 // Protected routes
