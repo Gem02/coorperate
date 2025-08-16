@@ -9,6 +9,20 @@ exports.getManagerReport = async (req, res) => {
   try {
     const { managerId } = req.params;
 
+    if (!managerId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Manager ID is required" 
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(managerId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid Manager ID format" 
+      });
+    }
+
     // 1️⃣ Verify manager exists
     const manager = await User.findById(managerId);
     if (!manager || manager.role !== "manager") {
