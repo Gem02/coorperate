@@ -5,6 +5,8 @@ const bankWalletController = require("../controllers/bankWalletController");
 //const { authenticateUser, verifyOwnership } = require("../middleware/auth");
 
 // Protected routes
+router.post('/bank-details/:userId',  bankWalletController.handleBankDetails);
+
 router.put("/bank-details/:userId",  bankWalletController.updateBankDetails);
 
 router.get("/bank-wallet/:userId", bankWalletController.getBankAndWalletInfo);
