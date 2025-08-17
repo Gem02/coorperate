@@ -11,6 +11,5 @@ router.put("/bank-details/:userId",  bankWalletController.updateBankDetails);
 
 router.get("/bank-wallet/:userId", bankWalletController.getBankAndWalletInfo);
 
-router.post("/withdraw/:userId",  bankWalletController.requestWithdrawal);
 
 module.exports = router;

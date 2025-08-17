@@ -14,10 +14,25 @@ const walletSchema = new mongoose.Schema({
   },
   transactions: [
     {
-      type: { type: String, enum: ["credit", "debit"], required: true }, // credit for commissions, debit for withdrawals
+      type: { type: String, enum: ["credit", "debit"], required: true },
       amount: { type: Number, required: true },
-      description: String, // e.g. "Commission from sale", "Withdrawal"
-      createdAt: { type: Date, default: Date.now }
+      description: String,
+      createdAt: { type: Date, default: Date.now },
+      // Add these new fields as optional
+      status: {
+        type: String,
+        enum: ["completed", "pending", "failed"],
+        default: "completed" // Maintain backward compatibility
+      },
+      referenceType: {
+        type: String,
+        enum: ["withdrawal", "commission", "other"],
+        default: "other"
+      },
+      referenceId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false // Make it optional
+      }
     }
   ]
 });

@@ -15,6 +15,7 @@ const tickets = require('./route/ticketRoutes');
 const paymentRoute = require('./route/paymentRoutes');
 const report = require('./route/managerReportRoutes');
 const accouts = require('./route/bankWalletRoutes');
+const withdraw = require('./route/withdrawalRoutes');
 
 const app = express();
 
@@ -44,7 +45,8 @@ app.use('/api/products', product);
 app.use('/api/tickets', tickets);
 app.use('/api/payment', paymentRoute);
 app.use('/api/reports', report);
-app.use('/api/account', accouts)
+app.use('/api/account', accouts);
+app.use('/api/withdrawal', withdraw);
 
 
 app.get("/", (req, res) => {
