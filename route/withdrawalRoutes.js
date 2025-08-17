@@ -28,4 +28,3 @@ router.get(
 
 module.exports = router;
 
-///api/withdrawal/history/:userId
