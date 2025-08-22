@@ -30,7 +30,10 @@ const paymentReceiptSchema = new mongoose.Schema({
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending"
-  }
+  },
+   productId: {
+    type: mongoose.Schema.Types.ObjectId, required: true, ref: "Product"
+   }
 }, { timestamps: true });
 
 module.exports = mongoose.model("PaymentReceipt", paymentReceiptSchema);

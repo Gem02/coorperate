@@ -4,9 +4,9 @@ const PaymentReceipt = require("../models/PaymentReceipt");
 // Save new payment receipt
 exports.submitReceipt = async (req, res) => {
   try {
-    const { paymentReceipt, transactionReference, firstName, lastName, quantity } = req.body;
+    const { paymentReceipt, transactionReference, firstName, lastName, quantity, productId } = req.body;
 
-    if (!paymentReceipt || !transactionReference || !firstName || !lastName || !quantity) {
+    if (!paymentReceipt || !transactionReference || !firstName || !lastName || !quantity || productId) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -15,7 +15,8 @@ exports.submitReceipt = async (req, res) => {
       transactionReference,
       firstName,
       lastName,
-      quantity
+      quantity,
+      productId
     });
 
     await newReceipt.save();
