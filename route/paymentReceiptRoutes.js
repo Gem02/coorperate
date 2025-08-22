@@ -5,6 +5,6 @@ const { submitReceipt, updateReceiptStatus, viewPaymentReport } = require("../co
 
 router.post("/", submitReceipt); // submit receipt
 router.put("/status/:id", updateReceiptStatus); // update status
-router.get('/', viewPaymentReport);
+router.get('/status', viewPaymentReport);
 
 module.exports = router;
