@@ -51,3 +51,12 @@ exports.updateReceiptStatus = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.viewPaymentReport = async (req, res) => {
+    try {
+        const payments = await PaymentReceipt.find().sort({ createdDate: -1 });
+        return res.status(200).json(payments)
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch payments', details: error.message });
+    }
+}
