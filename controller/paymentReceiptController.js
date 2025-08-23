@@ -97,7 +97,7 @@ exports.submitReceipt = async (req, res) => {
   try {
     const { paymentReceipt, transactionReference, firstName, lastName, quantity, productId, submittedBy } = req.body;
 
-    if (!paymentReceipt || !transactionReference || !firstName || !lastName || !quantity || productId || submittedBy) {
+    if (!paymentReceipt || !transactionReference || !firstName || !lastName || !quantity || !productId || !submittedBy) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
