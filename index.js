@@ -48,7 +48,7 @@ app.use('/api/payment', paymentRoute);
 app.use('/api/reports', report);
 app.use('/api/account', accouts);
 app.use('/api/withdrawal', withdraw);
-app.use('/api/payment', payment);
+app.use('/api/promotion', payment);
 
 
 app.get("/", (req, res) => {

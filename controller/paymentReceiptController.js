@@ -112,10 +112,10 @@ exports.submitReceipt = async (req, res) => {
     });
 
     await newReceipt.save();
-    res.status(201).json({ message: "Payment receipt submitted successfully", data: newReceipt });
+    return res.status(201).json({ message: "Payment receipt submitted successfully", data: newReceipt });
   } catch (err) {
     console.error("Error saving receipt:", err);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
