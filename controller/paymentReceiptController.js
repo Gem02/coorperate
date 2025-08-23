@@ -101,6 +101,12 @@ exports.submitReceipt = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
+    const transaction = PaymentReceipt.findOne({transactionReference});
+
+    if (transaction) {
+        return res.status(400).json({ error: "Transaction reference has been used" });
+    }
+
     const newReceipt = new PaymentReceipt({
       paymentReceipt,
       transactionReference,
