@@ -2,8 +2,6 @@ const crypto = require("crypto");
 const Payment = require("../models/paymentSchema");
 const Product = require("../models/Product");
 const User = require("../models/User");
-const Commission = require("../models/Commission");
-const Wallet = require("../models/Wallet");
 const Sale = require("../models/Sale"); 
 
 const handlePaystackWebhook = async (req, res) => {
@@ -114,55 +112,6 @@ async function processSuccessfulCharge(data) {
       });
       console.log(`✓ Sale recorded for ${item.name} (₦${saleAmount})`);
 
-      // 3. Process commissions (only for the first item to avoid duplicate commissions)
-      if (item === cartItems[0]) {
-        let commissionTarget = null;
-        let commissionSourceType = null;
-
-        if (buyer.ambassadorId) {
-          commissionTarget = buyer.ambassadorId;
-          commissionSourceType = "referral";
-        } else if (buyer.managerId) {
-          commissionTarget = buyer.managerId;
-          commissionSourceType = "sale";
-        }
-
-        if (commissionTarget) {
-          const existingCommission = await Commission.findOne({ 
-            sourceId: data.reference 
-          });
-
-          if (!existingCommission) {
-            // Save commission
-            await Commission.create({
-              userId: commissionTarget,
-              sourceType: commissionSourceType,
-              sourceId: data.reference,
-              amount: commissionAmount,
-              status: "approved",
-            });
-
-            // Update wallet
-            await Wallet.findOneAndUpdate(
-              { userId: commissionTarget },
-              {
-                $inc: { balance: commissionAmount },
-                $push: {
-                  transactions: {
-                    type: "credit",
-                    amount: commissionAmount,
-                    description: `Commission from ${commissionSourceType}`,
-                    createdAt: new Date()
-                  }
-                }
-              },
-              { upsert: true, new: true }
-            );
-
-            console.log(`✓ Commission recorded: ₦${commissionAmount}`);
-          }
-        }
-      }
     }
   } catch (error) {
     console.error("ERROR in processSuccessfulCharge:", error);

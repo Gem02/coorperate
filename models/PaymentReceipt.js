@@ -33,6 +33,9 @@ const paymentReceiptSchema = new mongoose.Schema({
   },
    productId: {
     type: mongoose.Schema.Types.ObjectId, required: true, ref: "Product"
+   },
+    submittedBy: {
+    type: mongoose.Schema.Types.ObjectId, required: true, ref: "User"
    }
 }, { timestamps: true });
 
