@@ -31,21 +31,33 @@ exports.submitReceipt = async (req, res) => {
 exports.updateReceiptStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, transactionReference } = req.body;
 
     if (!["pending", "approved", "rejected"].includes(status)) {
       return res.status(400).json({ error: "Invalid status value" });
     }
 
-    const updatedReceipt = await PaymentReceipt.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
+    // Find the receipt
+    const receipt = await PaymentReceipt.findById(id);
 
-    if (!updatedReceipt) {
+    if (!receipt) {
       return res.status(404).json({ error: "Receipt not found" });
     }
+
+    // Check transactionReference before approving
+    if (status === "approved") {
+      if (!transactionReference || transactionReference.trim() === "") {
+        return res.status(400).json({ error: "Transaction reference is required to approve" });
+      }
+
+      if (receipt.transactionReference !== transactionReference) {
+        return res.status(400).json({ error: "Transaction reference does not match" });
+      }
+    }
+
+    // Update status
+    receipt.status = status;
+    const updatedReceipt = await receipt.save();
 
     res.json({ message: "Status updated successfully", data: updatedReceipt });
   } catch (err) {

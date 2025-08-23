@@ -28,6 +28,10 @@ const saleSchema = new mongoose.Schema({
     type: Number, 
     required: true 
   },
+  paidCommission: { 
+    type: Boolean, 
+    default: false 
+  },
   saleDate: { 
     type: Date, 
     default: Date.now 
