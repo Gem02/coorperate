@@ -17,6 +17,7 @@ const report = require('./route/managerReportRoutes');
 const accouts = require('./route/bankWalletRoutes');
 const withdraw = require('./route/withdrawalRoutes');
 const payment = require('./route/paymentReceiptRoutes');
+const chart = require('./route/salesChartRoute');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/api/reports', report);
 app.use('/api/account', accouts);
 app.use('/api/withdrawal', withdraw);
 app.use('/api/promotion', payment);
+app.use('/api/sales-chart', chart);
 
 app.get("/", (req, res) => {
   res.json({
