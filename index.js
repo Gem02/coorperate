@@ -50,7 +50,6 @@ app.use('/api/account', accouts);
 app.use('/api/withdrawal', withdraw);
 app.use('/api/promotion', payment);
 
-
 app.get("/", (req, res) => {
   res.json({
     message: "API IS LIVE...",

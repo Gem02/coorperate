@@ -125,6 +125,26 @@ exports.submitReceipt = async (req, res) => {
   }
 };
 
+// Fetch payment reports for a specific user
+exports.viewUserPaymentReports = async (req, res) => {
+  try {
+    const { userId } = req.params; // Get userId from request params
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const payments = await PaymentReceipt.find({ submittedBy: userId })
+      .sort({ createdAt: -1 }) // use createdAt since your schema has timestamps
+      .populate("productId", "name price") // optional: show product details
+      .populate("submittedBy", "firstName lastName email"); // optional: show user details
+
+    return res.status(200).json(payments);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch payments", details: error.message });
+  }
+};
+
 
 exports.viewPaymentReport = async (req, res) => {
     try {
