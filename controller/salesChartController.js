@@ -16,7 +16,7 @@ exports.getAmbassadorMonthlySales = async (req, res) => {
     const { ambassadorId } = req.params;
 
     const sales = await Sale.aggregate([
-      { $match: { ambassadorId: mongoose.Types.ObjectId(ambassadorId) } },
+      { $match: { ambassadorId: new mongoose.Types.ObjectId(ambassadorId) } },
       {
         $group: {
           _id: { month: { $month: "$saleDate" } },
@@ -37,13 +37,14 @@ exports.getAmbassadorMonthlySales = async (req, res) => {
   }
 };
 
+
 // Manager Controller
 exports.getManagerMonthlySales = async (req, res) => {
   try {
     const { managerId } = req.params;
 
     const sales = await Sale.aggregate([
-      { $match: { managerId: mongoose.Types.ObjectId(managerId) } },
+      { $match: { managerId: new mongoose.Types.ObjectId(managerId) } },
       {
         $group: {
           _id: { month: { $month: "$saleDate" } },
