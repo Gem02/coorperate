@@ -18,7 +18,6 @@ const saleSchema = new mongoose.Schema({
   managerId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "User", 
-    required: true 
   },
   saleAmount: { 
     type: Number, 
@@ -26,7 +25,6 @@ const saleSchema = new mongoose.Schema({
   },
   commissionAmount: { 
     type: Number, 
-    required: true 
   },
   paidCommission: { 
     type: Boolean, 
