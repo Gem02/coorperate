@@ -27,6 +27,32 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getAllUsersForManager = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Fetch all users whose managerId matches the given manager's userId
+    const users = await UserModel.find({ managerId: userId }).select('-password');
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Get users error:", error);
+    return res.status(500).json({ message: "Failed to fetch users", error: error.message });
+  }
+};
+
+const getAllUsersForAmbassador = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const users = await UserModel.find({ ambassadorId: userId }).select('-password');
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Get users error:", error);
+    return res.status(500).json({ message: "Failed to fetch users", error: error.message });
+  }
+};
+
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -99,4 +125,4 @@ const unsuspendUser = async (req, res) => {
 
 
 
-module.exports = { fetchUserProfile, getAllUsers, deleteUser, suspendUser, unsuspendUser };
+module.exports = { fetchUserProfile, getAllUsersForAmbassador, getAllUsersForManager, getAllUsers, deleteUser, suspendUser, unsuspendUser };
