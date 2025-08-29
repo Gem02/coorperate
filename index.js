@@ -25,7 +25,7 @@ connectDB();
 app.set('trust proxy', 1);
 
 app.use(cors({
-  origin: ['http://localhost:5173','https://ambassador-admin.vercel.app','https://ay-developers.netlify.app','https://admin-ambassador.netlify.app','https://aydevelopers.netlify.app','https://ay-developers-admin.netlify.app' ],
+  origin: ['http://localhost:5173','https://ay-developers.netlify.app','https://admin-ambassador.netlify.app','https://aydevelopers.netlify.app','https://ay-developers-admin.netlify.app','https://ay-developers-ambassador.netlify.app','https://ay-developers-sgm.netlify.app' ],
   methods: 'GET,POST,PUT,DELETE,PATCH',
   credentials: true,
 }));
