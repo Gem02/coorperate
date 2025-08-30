@@ -65,11 +65,14 @@ exports.updateReceiptStatus = async (req, res) => {
 
       // Ambassador commission = ₦13,000
       if (sale.ambassadorId) {
+        console.log("we are at the ambassador commition" );
         let ambassadorWallet = await Wallet.findOne({ userId: sale.ambassadorId });
         if (!ambassadorWallet) {
-          ambassadorWallet = await Wallet.create({ userId: sale.ambassadorId, balance: 0 });
+          console.log("Ambassador wallet not found")
+          return res.status(400).json({error: "Ambassador wallet not found"})
         }
         ambassadorWallet.balance += 13000;
+        console.log("balance added")
         ambassadorWallet.transactions.push({
           type: "credit",
           amount: 13000,
