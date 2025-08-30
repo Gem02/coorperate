@@ -46,46 +46,105 @@ exports.updateReceiptStatus = async (req, res) => {
         return res.status(400).json({ error: "Commission already paid for this sale" });
       }
 
-      // Manager commission = ₦25,000
-      if (sale.managerId) {
-        let managerWallet = await Wallet.findOne({ userId: sale.managerId });
-        if (!managerWallet) {
-          managerWallet = await Wallet.create({ userId: sale.managerId, balance: 0 });
-        }
-        managerWallet.balance += 25000;
-        managerWallet.transactions.push({
-          type: "credit",
-          amount: 25000,
-          description: `Commission for sale ${sale._id}`,
-          referenceType: "commission",
-          referenceId: sale._id,
-        });
-        await managerWallet.save();
-      }
+      // Manager commission
+if (sale.managerId) {
+  console.log("🔎 Looking for manager wallet with userId:", sale.managerId);
 
-      // Ambassador commission = ₦13,000
-      if (sale.ambassadorId) {
-        console.log("we are at the ambassador commition" );
-        let ambassadorWallet = await Wallet.findOne({ userId: sale.ambassadorId });
-        if (!ambassadorWallet) {
-          console.log("Ambassador wallet not found")
-          return res.status(400).json({error: "Ambassador wallet not found"})
-        }
-        ambassadorWallet.balance += 13000;
-        console.log("balance added")
-        ambassadorWallet.transactions.push({
-          type: "credit",
-          amount: 13000,
-          description: `Commission for sale ${sale._id}`,
-          referenceType: "commission",
-          referenceId: sale._id,
-        });
-        await ambassadorWallet.save();
-      }
+  let managerWallet = await Wallet.findOne({ userId: sale.managerId });
 
-      // Mark commission as paid
-      sale.paidCommission = true;
-      await sale.save();
+  if (!managerWallet) {
+    console.log("⚠️ Manager wallet not found. Creating new wallet...");
+    managerWallet = new Wallet({ userId: sale.managerId, balance: 0, transactions: [] });
+  } else {
+    console.log("✅ Manager wallet found:", {
+      walletId: managerWallet._id,
+      currentBalance: managerWallet.balance,
+      transactionsCount: managerWallet.transactions.length,
+    });
+  }
+
+  const oldBalance = managerWallet.balance || 0;
+  const commissionAmount = 25000;
+  const newBalance = oldBalance + commissionAmount;
+
+  console.log(`💰 Adding commission: ${commissionAmount}. Old balance: ${oldBalance}, New balance: ${newBalance}`);
+
+  managerWallet.balance = newBalance;
+
+  const newTransaction = {
+    type: "credit",
+    amount: commissionAmount,
+    description: `Commission for sale ${sale._id}`,
+    referenceType: "commission",
+    referenceId: sale._id,
+  };
+
+  console.log("📝 Pushing transaction:", newTransaction);
+
+  managerWallet.transactions.push(newTransaction);
+  managerWallet.markModified("transactions");
+
+  await managerWallet.save();
+  console.log("✅ Manager wallet saved successfully. Updated wallet:", {
+    walletId: managerWallet._id,
+    userId: managerWallet.userId,
+    newBalance: managerWallet.balance,
+    transactionsCount: managerWallet.transactions.length,
+  });
+}
+
+// Ambassador commission
+if (sale.ambassadorId) {
+  console.log("🔎 Looking for ambassador wallet with userId:", sale.ambassadorId);
+
+  let ambassadorWallet = await Wallet.findOne({ userId: sale.ambassadorId });
+
+  if (!ambassadorWallet) {
+    console.log("❌ Ambassador wallet not found. Cannot credit commission.");
+    return res.status(400).json({ error: "Ambassador wallet not found" });
+  }
+
+  console.log("✅ Ambassador wallet found:", {
+    walletId: ambassadorWallet._id,
+    currentBalance: ambassadorWallet.balance,
+    transactionsCount: ambassadorWallet.transactions.length,
+  });
+
+  const oldBalance = ambassadorWallet.balance || 0;
+  const commissionAmount = 13000;
+  const newBalance = oldBalance + commissionAmount;
+
+  console.log(`💰 Adding commission: ${commissionAmount}. Old balance: ${oldBalance}, New balance: ${newBalance}`);
+
+  ambassadorWallet.balance = newBalance;
+
+  const newTransaction = {
+    type: "credit",
+    amount: commissionAmount,
+    description: `Commission for sale ${sale._id}`,
+    referenceType: "commission",
+    referenceId: sale._id,
+  };
+
+  console.log("📝 Pushing transaction:", newTransaction);
+
+  ambassadorWallet.transactions.push(newTransaction);
+  ambassadorWallet.markModified("transactions");
+
+  await ambassadorWallet.save();
+  console.log("✅ Ambassador wallet saved successfully. Updated wallet:", {
+    walletId: ambassadorWallet._id,
+    userId: ambassadorWallet.userId,
+    newBalance: ambassadorWallet.balance,
+    transactionsCount: ambassadorWallet.transactions.length,
+  });
+}
+
+// Finally mark commission as paid
+sale.paidCommission = true;
+await sale.save();
+console.log("🎉 Sale updated: paidCommission set to true for sale", sale._id);
+
     }
 
     res.json({ message: "Status updated successfully", data: receipt });
