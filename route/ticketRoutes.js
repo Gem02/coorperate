@@ -3,12 +3,14 @@ const router = express.Router();
 const {
   createTicket,
   getAllTickets,
+  getAllTicketsForUser,
   getTicketById,
   updateTicketStatus, replyToTicket
 } = require('../controller/ticketController');
 
 router.post('/', createTicket);
 router.get('/', getAllTickets);
+router.get('/user/:userId', getAllTicketsForUser);
 router.get('/:id', getTicketById);
 router.patch('/:id/status', updateTicketStatus);
 router.patch('/reply/:id', replyToTicket);

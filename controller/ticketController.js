@@ -16,22 +16,24 @@ const generateCustomId = async () => {
 
 const createTicket = async (req, res) => {
   try {
-    const { name, role, email, description, priority, subject } = req.body;
+    const { userId, name, role, email, description, priority, subject } = req.body;
 
-    if (!name || !role || !email || !description || !priority || !subject) {
+    if (!userId || !name || !role || !email || !description || !priority || !subject) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
 
     const customId = await generateCustomId();
 
     const ticket = await Ticket.create({
+      user: userId, // link to user
       name,
       role,
       email,
       description,
       priority,
       subject,
-      ticketId: customId
+      ticketId: customId,
+      updatedAt: new Date()
     });
 
     return res.status(201).json({
@@ -44,6 +46,25 @@ const createTicket = async (req, res) => {
   }
 };
 
+const getAllTicketsForUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required.' });
+    }
+
+    const tickets = await Ticket.find({ user: userId })
+      .sort({ createdAt: -1 })
+
+    return res.status(200).json(tickets);
+  } catch (error) {
+    console.error('Get tickets error:', error);
+    return res.status(500).json({ message: 'Failed to fetch tickets.' });
+  }
+};
+
+
 // Get all tickets
 const getAllTickets = async (req, res) => {
   try {
@@ -53,6 +74,9 @@ const getAllTickets = async (req, res) => {
     return res.status(500).json({ message: 'Failed to fetch tickets.' });
   }
 };
+
+// Get all tickets
+
 
 // Get a single ticket
 const getTicketById = async (req, res) => {
@@ -128,6 +152,7 @@ const replyToTicket = async (req, res) => {
 module.exports = {
   createTicket,
   getAllTickets,
+  getAllTicketsForUser,
   getTicketById,
   updateTicketStatus,
   replyToTicket
