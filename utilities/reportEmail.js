@@ -141,8 +141,8 @@ const sendManagerReportEmail = async (managerEmail, report) => {
     `;
 
     //Send the email
-    await resend.emails.send({
-      from: 'Ay Developers Reports <reports@aydevelopers.com.ng>',
+    return await resend.emails.send({
+      from: 'Ay Developers Reports <support@aydevelopers.com.ng>',
       to: managerEmail,
       subject: `Daily Performance Report - ${formattedDate}`,
       html: html
