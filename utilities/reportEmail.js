@@ -14,7 +14,6 @@ const sendManagerReportEmail = async (managerEmail, report) => {
       month: 'long',
       day: 'numeric'
     });
-
     // Create HTML email template with escaped values and fallbacks
     const html = `
 <!DOCTYPE html>
