@@ -1,5 +1,7 @@
 // utils/managerReportEmail.js
 const { Resend } = require('resend');
+const validator = require('validator'); // <-- Added for XSS protection
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendManagerReportEmail = async (managerEmail, report) => {
@@ -13,7 +15,7 @@ const sendManagerReportEmail = async (managerEmail, report) => {
       day: 'numeric'
     });
 
-    // Create HTML email template
+    // Create HTML email template with escaped values and fallbacks
     const html = `
 <!DOCTYPE html>
 <html>
@@ -49,32 +51,32 @@ const sendManagerReportEmail = async (managerEmail, report) => {
         
         <div class="card">
             <div class="card-title">Manager Information</div>
-            <p><strong>Name:</strong> ${report.managerInfo.name}</p>
-            <p><strong>Email:</strong> ${report.managerInfo.email}</p>
-            <p><strong>Phone:</strong> ${report.managerInfo.phone}</p>
+            <p><strong>Name:</strong> ${validator.escape(report.managerInfo?.name || 'N/A')}</p>
+            <p><strong>Email:</strong> ${validator.escape(report.managerInfo?.email || 'N/A')}</p>
+            <p><strong>Phone:</strong> ${validator.escape(report.managerInfo?.phone || 'N/A')}</p>
         </div>
         
         <div class="card">
             <div class="card-title">Team Overview</div>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-value">${report.teamStats.totalAmbassadors}</div>
+                    <div class="stat-value">${report.teamStats?.totalAmbassadors ?? 0}</div>
                     <div class="stat-label">Total Ambassadors</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${report.teamStats.totalUsers}</div>
+                    <div class="stat-value">${report.teamStats?.totalUsers ?? 0}</div>
                     <div class="stat-label">Total Users</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">₦${report.teamStats.totalTodaySales.toLocaleString()}</div>
+                    <div class="stat-value">₦${(report.teamStats?.totalTodaySales ?? 0).toLocaleString()}</div>
                     <div class="stat-label">Today's Sales</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">₦${report.teamStats.totalAllTimeSales.toLocaleString()}</div>
+                    <div class="stat-value">₦${(report.teamStats?.totalAllTimeSales ?? 0).toLocaleString()}</div>
                     <div class="stat-label">All Time Sales</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">₦${report.teamStats.totalCommission.toLocaleString()}</div>
+                    <div class="stat-value">₦${(report.teamStats?.totalCommission ?? 0).toLocaleString()}</div>
                     <div class="stat-label">Total Commission</div>
                 </div>
             </div>
@@ -90,10 +92,10 @@ const sendManagerReportEmail = async (managerEmail, report) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${report.salesByProduct.map(product => `
+                    ${(report.salesByProduct || []).map(product => `
                         <tr>
-                            <td>${product.productName}</td>
-                            <td>₦${product.totalSales.toLocaleString()}</td>
+                            <td>${validator.escape(product.productName)}</td>
+                            <td>₦${(product.totalSales ?? 0).toLocaleString()}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -112,19 +114,19 @@ const sendManagerReportEmail = async (managerEmail, report) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${report.ambassadorsPerformance.map(ambassador => `
+                    ${(report.ambassadorsPerformance || []).map(ambassador => `
                         <tr>
-                            <td>${ambassador.name}</td>
-                            <td>${ambassador.usersCount}</td>
-                            <td>₦${ambassador.todaySales.toLocaleString()}</td>
-                            <td>₦${ambassador.allTimeSales.toLocaleString()}</td>
+                            <td>${validator.escape(ambassador.name)}</td>
+                            <td>${ambassador.usersCount ?? 0}</td>
+                            <td>₦${(ambassador.todaySales ?? 0).toLocaleString()}</td>
+                            <td>₦${(ambassador.allTimeSales ?? 0).toLocaleString()}</td>
                         </tr>
                     `).join('')}
                     <tr class="highlight">
                         <td>TOTAL</td>
-                        <td>${report.teamStats.totalUsers}</td>
-                        <td>₦${report.teamStats.totalTodaySales.toLocaleString()}</td>
-                        <td>₦${report.teamStats.totalAllTimeSales.toLocaleString()}</td>
+                        <td>${report.teamStats?.totalUsers ?? 0}</td>
+                        <td>₦${(report.teamStats?.totalTodaySales ?? 0).toLocaleString()}</td>
+                        <td>₦${(report.teamStats?.totalAllTimeSales ?? 0).toLocaleString()}</td>
                     </tr>
                 </tbody>
             </table>
@@ -139,7 +141,7 @@ const sendManagerReportEmail = async (managerEmail, report) => {
 </html>
     `;
 
-    // Send the email
+    //Send the email
     await resend.emails.send({
       from: 'Ay Developers Reports <reports@aydevelopers.com.ng>',
       to: managerEmail,
@@ -151,7 +153,7 @@ const sendManagerReportEmail = async (managerEmail, report) => {
     return true;
   } catch (error) {
     console.error('Error sending manager report email:', error);
-    throw error;
+    throw error; // Re-throw to let the caller handle it
   }
 };
 
