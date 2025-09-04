@@ -72,21 +72,36 @@ const registerUser = async (req, res) => {
     // If no password sent, default to phone
     const finalPassword = password && password.trim() !== "" ? password : clean.phone;
 
-    // Create user
-    const user = await UserModel.create({
-      firstName: clean.firstName,
-      lastName: clean.lastName,
-      email: clean.email,
-      phone: clean.phone,
-      country: clean.country,
-      state: clean.state,
-      lga: clean.lga,
-      password: finalPassword, // will be hashed in pre-save
-      photo: clean.photo,
-      role: clean.role,
-      managerId: managerDoc ? managerDoc._id : null,
-      ambassadorId: ambassadorDoc ? ambassadorDoc._id : null
-    });
+    // Determine the correct managerId
+    let finalManagerId = null;
+
+      // If a managerId was provided directly in the request, use it (for direct manager signups)
+      if (managerDoc) {
+        finalManagerId = managerDoc._id;
+      }
+      // If an ambassador was provided AND no manager was provided directly...
+      // ...then this signup is happening through an ambassador. Let's get the ambassador's manager.
+      else if (ambassadorDoc && ambassadorDoc.managerId) {
+        finalManagerId = ambassadorDoc.managerId;
+      }
+      // Otherwise, it remains null
+
+      // Create user
+      const user = await UserModel.create({
+        firstName: clean.firstName,
+        lastName: clean.lastName,
+        email: clean.email,
+        phone: clean.phone,
+        country: clean.country,
+        state: clean.state,
+        lga: clean.lga,
+        password: finalPassword,
+        photo: clean.photo,
+        role: clean.role,
+        managerId: finalManagerId, // Use the logic we just figured out
+        ambassadorId: ambassadorDoc ? ambassadorDoc._id : null
+      });
+
 
       await Wallet.create({
       userId: user._id,
